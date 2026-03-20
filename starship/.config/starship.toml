@@ -1,0 +1,63 @@
+# ~/.config/starship.toml
+
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = true
+
+# Reordered for better logic: OS -> Path -> Git -> Sudo (only if root) -> Character
+format = """
+$os\
+$directory\
+$git_branch\
+$git_status\
+$sudo\
+$character"""
+
+# Keep system info on the right
+right_format = """$cmd_duration$jobs"""
+
+[character]
+# Success: Bold Magenta
+success_symbol = "[❯](bold magenta)"
+# Error: Bold Red (This only triggers if the previous command returned non-zero)
+error_symbol = "[❯](bold red)"
+# Vi-Mode: Bold Cyan (Flipped arrow)
+vicmd_symbol = "[❮](bold cyan)" 
+
+[directory]
+style = "bold green"
+truncation_length = 3
+truncation_symbol = "…/"
+home_symbol = "󱂵 ~"
+read_only = " 󰌾"
+
+[sudo]
+# By default, only show if we are actually the root user
+disabled = false
+style = "bold yellow" # Changed to Yellow so it doesn't look like an "Error" Red
+symbol = "󱆃 "
+format = "[$symbol]($style)"
+
+[os]
+disabled = false
+style = "bold blue"
+format = "[$symbol ]($style)"
+
+[os.symbols]
+Debian = ""
+
+[git_branch]
+symbol = "󰊢 "
+style = "bold purple"
+format = "on [$symbol$branch]($style) "
+
+[git_status]
+style = "bold red"
+# Fixed format syntax to prevent the [WARN] you saw earlier
+format = "([$all_status$ahead_behind]($style)) "
+up_to_date = "[✔](bold green)"
+
+[cmd_duration]
+min_time = 500
+style = "bold yellow"
+format = "took [$duration]($style) "
