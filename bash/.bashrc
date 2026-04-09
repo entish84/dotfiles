@@ -8,7 +8,8 @@ case $- in
       *) return;;
 esac
 
-[[ $- == *i* ]] && source ~/.local/share/blesh/ble.sh --noattach
+# Add this lines at the top of .bashrc:
+[[ $- == *i* ]] && source -- ~/.local/share/blesh/ble.sh --attach=none
 
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
@@ -74,9 +75,6 @@ xterm*|rxvt*)
     ;;
 esac
 
-export EDITOR='micro' # or nano
-export PAGER='less'
-
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
@@ -119,51 +117,10 @@ fi
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
-
-eval "$(starship init bash)"
 eval "$(zoxide init bash)"
-eval "$(/home/rs/.local/bin/mise activate bash)"
+# eval "$(/usr/bin/mise activate zsh)"
+eval "$(starship init bash)"
+eval "$(/home/rs/.local/bin/mise activate bash)" # added by https://mise.run/bash
 
-# alias bat='batcat'
-
-alias ls='eza -l --icons --group-directories-first'
-alias ll='eza -lh --icons --git-ignore'
-alias la='eza -lha --icons'
-alias lt='eza --tree --icons'
-
-# Cat Replacement (bat)
-# alias cat='bat --paging=never'
-
-# Yazi (File Manager) - Function to change directory on exit
-function y() {
-	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
-	yazi "$@" --cwd-file="$tmp"
-	if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-		builtin cd -- "$cwd"
-	fi
-	rm -f -- "$tmp"
-}
-
-# Quality of Life
-alias ..='cd ..'
-alias ...='cd ../..'
-alias cd='z'
-alias grep='grep --color=auto'
-alias cp='cp -iv'
-alias mv='mv -iv'
-alias mkdir='mkdir -vp'
-alias lpath='echo -e ${PATH//:/\\n}'
-alias q='exit'
-alias c='clear'
-
-# System Maintenance (Debian Specific)
-alias aptupd='sudo apt update && sudo apt upgrade -y'
-alias aptclean='sudo apt autoremove && sudo apt autoclean'
-alias pkg-list='apt list --installed'
-alias aptin='sudo apt install -y'
-alias aptrm='sudo apt remove -y'
-alias bashed='micro ~\.bashrc'
-alias bashrl='source ~\.bashrc'
-
-[[ ${BLE_VERSION-} ]] && ble-attach
-
+# Add this line at the end of .bashrc:
+[[ ! ${BLE_VERSION-} ]] || ble-attach
