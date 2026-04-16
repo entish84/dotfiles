@@ -1,0 +1,31 @@
+# Aliases
+alias d=dotnet
+alias db="dotnet build"
+alias dw="dotnet watch"
+alias dr="dotnet run"
+alias dt="dotnet test"
+alias c="clear"
+alias q="exit"
+
+# Git Aliases
+alias gs="git status"
+alias ga="git add"
+alias gc="git commit"
+alias gp="git push"
+alias gl="git log --oneline --graph --decorate"
+
+alias ls="eza -lha --color=auto --icons=auto --group-directories-first"
+alias lt="eza -a --tree --level=3 --long --icons --git"
+alias grep="grep --color=auto"
+alias cat='batcat --paging=never'
+alias less='batcat --style=plain'
+alias path='echo -e ${PATH//:/\\n}' 
+
+alias zshconfig="micro ~/.zshrc"
+alias zshreload="source ~/.zshrc"
+
+# System Update and Upgrade Aliases
+alias aptupd="sudo apt update && sudo apt upgrade"
+alias aptclean="sudo apt autoremove && sudo apt autoclean"
+alias aptin="sudo apt install -y"
+alias aptrm="sudo apt remove -y"
