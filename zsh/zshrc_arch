@@ -53,31 +53,7 @@ setopt hist_expire_dups_first
 setopt hist_ignore_dups
 setopt hist_verify
 
-# Aliases
-alias d=dotnet
-alias db="dotnet build"
-alias dw="dotnet watch"
-alias dr="dotnet run"
-alias dt="dotnet test"
-alias c="clear"
-alias q="exit"
-
-alias ls="eza -lh --color=auto --icons=auto --group-directories-first"
-alias lsa="ls -a"
-alias lt="eza --tree --level=3 --long --icons --git"
-alias lta="lt -a"
-alias grep="ripgrep --color=auto"
-alias cat='bat --paging=never'
-alias less='bat --style=plain'
-alias yayupd="yay -Syu"
-alias pacupd="sudo pacman -Syu"
-alias pacclean="sudo pacman -Rns \$(pacman -Qtdq)"
-alias pacin="sudo pacman -S --noconfirm"
-alias pacrm="sudo pacman -Rns"
-alias yayin="yay -S"
-alias yayrm="yay -Rns"
-alias zshconfig="micro ~/.zshrc"
-alias zshreload="source ~/.zshrc"
+source ~/.zsh_aliases
 
 # vscode integration
 [[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
