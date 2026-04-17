@@ -1,0 +1,33 @@
+# Aliases
+alias d=dotnet
+alias db="dotnet build"
+alias dw="dotnet watch"
+alias dr="dotnet run"
+alias dt="dotnet test"
+alias c="clear"
+alias q="exit"
+
+# Git Aliases
+alias gs="git status"
+alias ga="git add"
+alias gc="git commit"
+alias gp="git push"
+alias gl="git log --oneline --graph --decorate"
+
+alias ls="eza -lha --color=auto --icons=auto --group-directories-first"
+alias lt="eza -a --tree --level=3 --long --icons --git"
+alias grep="grep --color=auto"
+alias cat='bat --paging=never'
+alias less='bat --style=plain'
+
+alias zshconfig="micro ~/.zshrc"
+alias zshreload="source ~/.zshrc"
+
+alias yayupd="yay -Syu"
+alias pacupd="sudo pacman -Syu"
+alias pacclean="sudo pacman -Rns \$(pacman -Qtdq)"
+alias pacin="sudo pacman -S --noconfirm"
+alias pacrm="sudo pacman -Rns"
+alias yayin="yay -S"
+alias yayrm="yay -Rns"
+
