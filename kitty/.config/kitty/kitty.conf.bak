@@ -1,33 +1,60 @@
-# FONTS
-font_family      FiraCode Nerd Font
-bold_font        auto
-italic_font      auto
-bold_italic_font auto
-font_size        12.0
+font_size        13.0
 
-# PERFORMANCE
-repaint_delay    8
-input_delay      2
-sync_to_monitor  yes
+# Ligatures (2026 Standard: Enable by default)
+disable_ligatures never
 
-# APPEARANCE
+# --- Window & Opacity ---
 background_opacity 0.85
-# background_blur    1
+# background_blur    20
+# For Arch/Wayland users, blur requires a compositor (like Hyprland or Sway)
+# to support the "background_blur" protocol.
+
+# Window Padding (Makes it look cleaner)
+window_padding_width 10
+
+# --- Performance & Mouse ---
+repaint_delay    10
+input_delay      3
+sync_to_monitor  yes
+detect_urls      yes
+copy_on_select   yes
+
+# --- Cursor Customization ---
+cursor_shape          block
+cursor_blink_interval 0.5
+cursor_stop_blinking_after 15.0
+
 window_padding_width 10
 enabled_layouts splits,stack
 remember_window_size yes
-hide_window_decorations no
-wayland_titlebar_color system
+hide_window_decorations yes
+# wayland_titlebar_color system
 
 # Cursor Trail (New in late 2025/2026)
 cursor_trail 3
 cursor_trail_decay 0.1 0.4
 
-# TAB BAR
-tab_bar_style powerline
-tab_powerline_style slanted
+# --- Tab Bar Styling ---
+tab_bar_edge            bottom
+tab_bar_style           powerline
+tab_powerline_style     slanted
+tab_title_template      "{index}: {title}"
+active_tab_font_style   bold
+inactive_tab_font_style normal
 
 # MISC
 confirm_os_window_close 0
 shell_integration enabled
 
+
+# BEGIN_KITTY_THEME
+# Box
+include current-theme.conf
+# END_KITTY_THEME
+
+# BEGIN_KITTY_FONTS
+font_family      family="AtkynsonMono Nerd Font"
+bold_font        auto
+italic_font      auto
+bold_italic_font auto
+# END_KITTY_FONTS

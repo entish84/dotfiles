@@ -1,50 +1,103 @@
-# Zinit installation
+# ==============================================================================
+# ENVIRONMENT VARIABLES & PATHS
+# ==============================================================================
+export LANG=en_US.UTF-8
+export EDITOR=nvim
+export VISUAL=nvim
+
+# Ensure local binaries are in path
+typeset -U path
+path=(
+    $HOME/.local/bin
+    $HOME/bin
+    $path
+)
+
+# ==============================================================================
+# ZINIT INSTALLATION & BOOTSTRAP
+# ==============================================================================
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-[ ! -d $ZINIT_HOME ] && mkdir -p "$(dirname $ZINIT_HOME)"
-[ ! -d $ZINIT_HOME/.git ] && git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+if [ ! -d "$ZINIT_HOME" ]; then
+    mkdir -p "$(dirname $ZINIT_HOME)"
+    git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+fi
 source "${ZINIT_HOME}/zinit.zsh"
 
-# Load OMZ libs we need (not the whole thing)
-zinit snippet OMZL::git.zsh
-zinit snippet OMZL::directories.zsh
-zinit snippet OMZL::theme-and-appearance.zsh
-zinit snippet OMZL::async_prompt.zsh
-
-# eza config - must be set BEFORE loading the plugin
-zstyle ':omz:plugins:eza' 'dirs-first' yes
-zstyle ':omz:plugins:eza' 'git-status' yes
-zstyle ':omz:plugins:eza' 'header' yes
-zstyle ':omz:plugins:eza' 'icons' yes
-
-# Load OMZ plugins
-zinit snippet OMZP::git
-zinit snippet OMZP::direnv
-zinit snippet OMZP::eza
-
-# Load a few important annexes, without Turbo
-# (this is currently required for annexes)
+# Load core annexes
 zinit light-mode for \
     zdharma-continuum/zinit-annex-as-monitor \
     zdharma-continuum/zinit-annex-bin-gem-node \
     zdharma-continuum/zinit-annex-patch-dl \
     zdharma-continuum/zinit-annex-rust
 
-# Zsh plugins
-# zinit light marlonrichert/zsh-autocomplete
-zinit light zsh-users/zsh-syntax-highlighting
-zinit light zsh-users/zsh-autosuggestions
+# ==============================================================================
+# OH-MY-ZSH LIBRARIES & PLUGINS (Synchronous)
+# ==============================================================================
+zinit snippet OMZL::git.zsh
+zinit snippet OMZL::directories.zsh
+zinit snippet OMZL::theme-and-appearance.zsh
+
+# eza config (Must be set before loading plugin)
+zstyle ':omz:plugins:eza' 'dirs-first' yes
+zstyle ':omz:plugins:eza' 'git-status' yes
+zstyle ':omz:plugins:eza' 'header' yes
+zstyle ':omz:plugins:eza' 'icons' yes
+
+zinit snippet OMZP::git
+zinit snippet OMZP::direnv
+zinit snippet OMZP::eza
+
+# ==============================================================================
+# HIGH-PERFORMANCE PLUGINS (Turbo Mode)
+# ==============================================================================
+
+# fzf-tab: Modern tab completion
+zinit ice wait'0' lucid
 zinit light Aloxaf/fzf-tab
 
-# Load completions efficiently (after prompt is ready)
-autoload -Uz compinit
-compinit
+# fast-syntax-highlighting: Use the correct internal Zinit function names
+zinit ice wait'0b' lucid atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay"
+zinit light zdharma-continuum/fast-syntax-highlighting
 
-# Initialize tools
+# autosuggestions: Load after syntax highlighting
+zinit ice wait'0c' lucid atload"!_zsh_autosuggest_start"
+zinit light zsh-users/zsh-autosuggestions
+
+# Additional completions for development tools
+zinit ice wait'0' lucid blockf
+zinit light zsh-users/zsh-completions
+
+# ==============================================================================
+# FZF-TAB CONFIGURATION & PREVIEWS
+# ==============================================================================
+# Disable default group descriptions to keep it clean
+zstyle ':completion:*:descriptions' format '[%d]'
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':fzf-tab:*' switch-group ',' '.'
+
+# Previews using eza (directories) and bat (files)
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'bat --color=always --line-range :500 $realpath'
+
+# ==============================================================================
+# TOOL INITIALIZATION
+# ==============================================================================
+# 1. Load Atuin Environment FIRST (so the 'atuin' command is found)
+[ -f "$HOME/.atuin/bin/env" ] && . "$HOME/.atuin/bin/env"
+
+# 2. Initialize tools
 eval "$(starship init zsh)"
 eval "$(/home/rs/.local/bin/mise activate zsh)"
 eval "$(zoxide init zsh)"
 
-# history setup
+# 3. Initialize Atuin (now that it's in the PATH)
+if command -v atuin &>/dev/null; then
+    eval "$(atuin init zsh)"
+fi
+
+# ==============================================================================
+# HISTORY SETTINGS
+# ==============================================================================
 HISTFILE=$HOME/.zhistory
 SAVEHIST=10000
 HISTSIZE=10000
@@ -53,12 +106,10 @@ setopt hist_expire_dups_first
 setopt hist_ignore_dups
 setopt hist_verify
 
-source ~/.zsh_aliases
-
-# vscode integration
-[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
-
-# Function to change directory to the last one visited in yazi on exit
+# ==============================================================================
+# FUNCTIONS & ALIASES
+# ==============================================================================
+# Yazi wrapper for directory tracking on exit
 function yy() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
 	yazi "$@" --cwd-file="$tmp"
@@ -67,10 +118,22 @@ function yy() {
 	fi
 	rm -f -- "$tmp"
 }
+
 alias fm=yy
+alias vim=nvim
+alias lg=lazygit
 
-# Atuin - synced shell history (load last)
-. "$HOME/.atuin/bin/env"
-eval "$(atuin init zsh)"
+# Source external aliases
+[ -f ~/.zsh_aliases ] && source ~/.zsh_aliases
 
+# ==============================================================================
+# INTEGRATIONS & FINAL SETUP
+# ==============================================================================
+# VSCode shell integration
+[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
+
+# Atuin environment
+[ -f "$HOME/.atuin/bin/env" ] && . "$HOME/.atuin/bin/env"
+
+# Clean up path duplicates
 typeset -U PATH

@@ -1,63 +1,80 @@
-# ~/.config/starship.toml
+# Starship Configuration - Hack The Box Minimal (2026 Edition)
+# Palette: HackTheBox (Kitty "Box" Theme)
 
-"$schema" = 'https://starship.rs/config-schema.json'
-
+# 1. GLOBAL SETTINGS
 add_newline = true
+palette = "htb"
 
-# Reordered for better logic: OS -> Path -> Git -> Sudo (only if root) -> Character
+# 2. PROMPT FORMAT
+# Minimalist layout: Folder -> Git -> Runtimes -> Prompt Char
 format = """
-$os\
-$directory\
-$git_branch\
-$git_status\
-$sudo\
+$directory$git_branch$git_status$dotnet$nodejs
 $character"""
 
-# Keep system info on the right
-right_format = """$cmd_duration$jobs"""
+# 3. PALETTE DEFINITION (HTB Box Colors)
+[palettes.htb]
+htb_green = "#9fef00"   # Primary HTB Green
+htb_bg = "#1a2332"      # Deep Navy Background
+htb_fg = "#a4b1cd"      # Muted Grey-Blue Text
+htb_white = "#ffffff"   # Clean White
+htb_red = "#ff3e3e"     # Critical Error Red
+htb_yellow = "#ffaf00"  # Warning/Pending Yellow
+htb_teal = "#2ee7b6"    # Active Cyan
 
+# 4. MODULE CONFIGURATION
 [character]
-# Success: Bold Magenta
-success_symbol = "[❯](bold magenta)"
-# Error: Bold Red (This only triggers if the previous command returned non-zero)
-error_symbol = "[❯](bold red)"
-# Vi-Mode: Bold Cyan (Flipped arrow)
-vicmd_symbol = "[❮](bold cyan)" 
+# Using the Lambda (λ) symbol for the Half-Life aesthetic
+success_symbol = "[λ](bold htb_green)"
+error_symbol = "[λ](bold htb_red)"
+vimcmd_symbol = "[λ](bold htb_teal)"
 
 [directory]
-style = "bold green"
+style = "bold htb_green"
+format = "[$path]($style) "
 truncation_length = 3
 truncation_symbol = "…/"
-home_symbol = "󱂵 ~"
-read_only = " 󰌾"
-
-[sudo]
-# By default, only show if we are actually the root user
-disabled = false
-style = "bold yellow" # Changed to Yellow so it doesn't look like an "Error" Red
-symbol = "󱆃 "
-format = "[$symbol]($style)"
-
-[os]
-disabled = false
-style = "bold blue"
-format = "[$symbol ]($style)"
-
-[os.symbols]
-Debian = ""
 
 [git_branch]
-symbol = "󰊢 "
-style = "bold purple"
+symbol = " "
+style = "bold htb_fg"
 format = "on [$symbol$branch]($style) "
 
 [git_status]
-style = "bold red"
-# Fixed format syntax to prevent the [WARN] you saw earlier
-format = "([$all_status$ahead_behind]($style)) "
-up_to_date = "[✔](bold green)"
+style = "htb_yellow"
+format = "([\\[$all_status$ahead_behind\\]]($style) )"
+# Minimalist status symbols
+stashed = "≡"
+modified = "!"
+untracked = "?"
+staged = "+"
 
+[dotnet]
+symbol = "󰪮 "
+style = "bold htb_fg"
+# Only shows if project files (.csproj, .sln) are detected
+detect_files = ['.csproj', '.sln', '.fsproj', 'global.json']
+format = "via [$symbol($version )]($style)"
+
+[nodejs]
+symbol = " "
+style = "bold htb_fg"
+# Smart detection to avoid global version clutter
+detect_files = ['package.json', '.node-version']
+format = "via [$symbol($version )]($style)"
+
+[os]
+disabled = false
+style = "htb_fg"
+
+[package]
+disabled = true # Keeps the prompt minimal
+
+[fill]
+symbol = " " # Empty fill to push character to the end of the line if desired
+
+# 5. EXCLUSIONS (Requested)
 [cmd_duration]
-min_time = 500
-style = "bold yellow"
-format = "took [$duration]($style) "
+disabled = true
+
+[time]
+disabled = true
