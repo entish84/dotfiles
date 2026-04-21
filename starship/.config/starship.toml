@@ -1,5 +1,6 @@
 # Starship Configuration - Hack The Box Minimal (2026 Edition)
 # Palette: HackTheBox (Kitty "Box" Theme)
+"$schema" = 'https://starship.rs/config-schema.json'
 
 # 1. GLOBAL SETTINGS
 add_newline = true
@@ -8,7 +9,7 @@ palette = "htb"
 # 2. PROMPT FORMAT
 # Minimalist layout: Folder -> Git -> Runtimes -> Prompt Char
 format = """
-$directory$git_branch$git_status$dotnet$nodejs
+$directory$git_branch$git_status$dotnet$nodejs$python$rust$golang$java$lua$c$bun
 $character"""
 
 # 3. PALETTE DEFINITION (HTB Box Colors)
@@ -29,7 +30,7 @@ error_symbol = "[λ](bold htb_red)"
 vimcmd_symbol = "[λ](bold htb_teal)"
 
 [directory]
-style = "bold htb_green"
+style = "italic htb_green"
 format = "[$path]($style) "
 truncation_length = 3
 truncation_symbol = "…/"
@@ -60,6 +61,42 @@ symbol = " "
 style = "bold htb_fg"
 # Smart detection to avoid global version clutter
 detect_files = ['package.json', '.node-version']
+format = "via [$symbol($version )]($style)"
+
+[python]
+symbol = " "
+style = "bold htb_fg"
+format = "via [$symbol($version )(\\($virtualenv\\) )]($style)"
+pyenv_version_name = true
+
+[rust]
+symbol = " "
+style = "bold htb_fg"
+format = "via [$symbol($version )]($style)"
+
+[golang]
+symbol = " "
+style = "bold htb_fg"
+format = "via [$symbol($version )]($style)"
+
+[java]
+symbol = " "
+style = "bold htb_fg"
+format = "via [$symbol($version )]($style)"
+
+[lua]
+symbol = " "
+style = "bold htb_fg"
+format = "via [$symbol($version )]($style)"
+
+[c]
+symbol = " "
+style = "bold htb_fg"
+format = "via [$symbol($version )]($style)"
+
+[bun]
+symbol = "󰐊 "
+style = "bold htb_fg"
 format = "via [$symbol($version )]($style)"
 
 [os]
