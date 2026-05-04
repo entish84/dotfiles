@@ -33,16 +33,16 @@ zinit light-mode for \
 # ==============================================================================
 # OH-MY-ZSH LIBRARIES & PLUGINS (Synchronous)
 # ==============================================================================
-zinit snippet OMZL::git.zsh
-zinit snippet OMZL::directories.zsh
-zinit snippet OMZL::theme-and-appearance.zsh
-
 # eza config (Must be set before loading plugin)
 zstyle ':omz:plugins:eza' 'dirs-first' yes
 zstyle ':omz:plugins:eza' 'git-status' yes
 zstyle ':omz:plugins:eza' 'header' yes
 zstyle ':omz:plugins:eza' 'icons' yes
 
+zinit snippet OMZL::git.zsh
+zinit snippet OMZL::history.zsh         
+zinit snippet OMZL::directories.zsh
+zinit snippet OMZL::theme-and-appearance.zsh
 zinit snippet OMZP::git
 zinit snippet OMZP::direnv
 zinit snippet OMZP::eza
@@ -51,33 +51,50 @@ zinit snippet OMZP::eza
 # HIGH-PERFORMANCE PLUGINS (Turbo Mode)
 # ==============================================================================
 
-# fzf-tab: Modern tab completion
-zinit ice wait'0' lucid
-zinit light Aloxaf/fzf-tab
-
-# fast-syntax-highlighting: Use the correct internal Zinit function names
-zinit ice wait'0b' lucid atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay"
-zinit light zdharma-continuum/fast-syntax-highlighting
-
-# autosuggestions: Load after syntax highlighting
-zinit ice wait'0c' lucid atload"!_zsh_autosuggest_start"
-zinit light zsh-users/zsh-autosuggestions
-
-# Additional completions for development tools
+# 1. Additional completions (Load first, but use blockf to prevent header issues)
 zinit ice wait'0' lucid blockf
 zinit light zsh-users/zsh-completions
+
+# 2. Syntax Highlighting (The engine)
+# Using '0a' to ensure it starts after completions
+zinit ice wait'0a' lucid atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay"
+zinit light zdharma-continuum/fast-syntax-highlighting
+
+# 3. fzf-tab (The UI for completions)
+# Load after syntax highlighting to avoid conflict
+zinit ice wait'0b' lucid
+zinit light Aloxaf/fzf-tab
+
+# 4. Autosuggestions (The top layer)
+# Load last ('0c') to ensure it doesn't interfere with the others
+zinit ice wait'0c' lucid atload"!_zsh_autosuggest_start"
+zinit light zsh-users/zsh-autosuggestions
 
 # ==============================================================================
 # FZF-TAB CONFIGURATION & PREVIEWS
 # ==============================================================================
-# Disable default group descriptions to keep it clean
+# 1. Standard Zsh completion styling
 zstyle ':completion:*:descriptions' format '[%d]'
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
-zstyle ':fzf-tab:*' switch-group ',' '.'
 
-# Previews using eza (directories) and bat (files)
+# 2. fzf-tab behavioral tweaks
+# Switch groups using ',' and '.'
+zstyle ':fzf-tab:*' switch-group ',' '.'
+# Apply the suggested height limit for a cleaner UI
+zstyle ':fzf-tab:*' fzf-flags '--height=40%'
+
+# 3. Intelligent Previews
+# Specific rule for 'cd' (uses eza for directory tree/list)
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
-zstyle ':fzf-tab:complete:*:*' fzf-preview 'bat --color=always --line-range :500 $realpath'
+
+# Faster fallback: check -d (directory) first to avoid launching a process that will fail
+zstyle ':fzf-tab:complete:*:*' fzf-preview \
+  'if [ -d $realpath ]; then eza -1 --color=always $realpath; else bat --color=always --line-range :500 $realpath 2>/dev/null; fi'
+
+# 4. Bonus: System Process Preview (for kill/ps)
+zstyle ':fzf-tab:complete:(kill|ps):argument-rest' fzf-preview \
+  '[[ $group == "[process ID]" ]] && ps --pid=$word -o cmd --no-headers -w -w'
+zstyle ':fzf-tab:complete:(kill|ps):argument-rest' fzf-flags --preview-window=down:3:wrap
 
 # ==============================================================================
 # TOOL INITIALIZATION
@@ -89,22 +106,18 @@ zstyle ':fzf-tab:complete:*:*' fzf-preview 'bat --color=always --line-range :500
 eval "$(starship init zsh)"
 eval "$(/home/rs/.local/bin/mise activate zsh)"
 eval "$(zoxide init zsh)"
-
-# 3. Initialize Atuin (now that it's in the PATH)
-if command -v atuin &>/dev/null; then
-    eval "$(atuin init zsh)"
-fi
+eval "$(atuin init zsh)"
 
 # ==============================================================================
 # HISTORY SETTINGS
 # ==============================================================================
 HISTFILE=$HOME/.zhistory
-SAVEHIST=10000
-HISTSIZE=10000
-setopt share_history
-setopt hist_expire_dups_first
-setopt hist_ignore_dups
-setopt hist_verify
+SAVEHIST=100000
+HISTSIZE=100000
+setopt EXTENDED_HISTORY          # Save timestamp and duration
+setopt SHARE_HISTORY             # Share between sessions
+setopt HIST_IGNORE_ALL_DUPS      # No duplicates
+setopt HIST_REDUCE_BLANKS        # Clean up commands
 
 # ==============================================================================
 # FUNCTIONS & ALIASES
@@ -120,8 +133,6 @@ function yy() {
 }
 
 alias fm=yy
-alias vim=nvim
-alias lg=lazygit
 
 # Source external aliases
 [ -f ~/.zsh_aliases ] && source ~/.zsh_aliases
@@ -131,6 +142,3 @@ alias lg=lazygit
 # ==============================================================================
 # VSCode shell integration
 [[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
-
-# Clean up path duplicates
-typeset -U PATH
