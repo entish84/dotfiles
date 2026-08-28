@@ -1,0 +1,14 @@
+# Chris Titus UTIL in Powershell
+irm https://christitus.com/win | iex
+
+# Clink Install
+winget install --id chrisant996.Clink -e
+
+# Starship for CMD
+# Create a file at %LocalAppData%\clink\starship.lua
+# with content as
+load(io.popen('starship init cmd'):read("*a"))()
+
+# Starship for PowerShell
+Invoke-Expression (&starship init powershell)
+
