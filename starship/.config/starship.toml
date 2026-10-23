@@ -1,117 +1,136 @@
-# Starship Configuration - Hack The Box Minimal (2026 Edition)
-# Palette: HackTheBox (Kitty "Box" Theme)
 "$schema" = 'https://starship.rs/config-schema.json'
 
-# 1. GLOBAL SETTINGS
-add_newline = true
-palette = "htb"
+palette = "charcoal_amber"
 
-# 2. PROMPT FORMAT
-# Minimalist layout: Folder -> Git -> Runtimes -> Prompt Char
+# Two-line layout: Path, Git/JJ, and subtle Language Runtimes on Line 1
+# Active Venv and Modern Prompt Character on Line 2
 format = """
-$directory$git_branch$git_status$dotnet$nodejs$python$rust$golang$java$lua$c$bun
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_state\
+$git_status\
+$jj_bookmark\
+$jj_status\
+$dotnet\
+$python\
+$nodejs\
+$rust\
+$golang\
+$cmd_duration\
+$line_break\
 $character"""
 
-# 3. PALETTE DEFINITION (HTB Box Colors)
-[palettes.htb]
-htb_green = "#9fef00"   # Primary HTB Green
-htb_bg = "#1a2332"      # Deep Navy Background
-htb_fg = "#a4b1cd"      # Muted Grey-Blue Text
-htb_white = "#ffffff"   # Clean White
-htb_red = "#ff3e3e"     # Critical Error Red
-htb_yellow = "#ffaf00"  # Warning/Pending Yellow
-htb_teal = "#2ee7b6"    # Active Cyan
+# Custom Palette matching Kitty (#222831 / #393e46 / #ffd369 / #eeeeee)
+[palettes.charcoal_amber]
+charcoal   = "#222831"
+slate      = "#393e46"
+muted_grey = "#7f848e"
+amber      = "#ffd369"
+soft_white = "#eeeeee"
+coral      = "#e06c75"
+sage       = "#98c379"
+steel_blue = "#61afef"
+frost_teal = "#56b6c2"
+mauve      = "#c678dd"
 
-# 4. MODULE CONFIGURATION
-[character]
-# Using the Lambda (λ) symbol for the Half-Life aesthetic
-success_symbol = "[λ](bold htb_green)"
-error_symbol = "[λ](bold htb_red)"
-vimcmd_symbol = "[λ](bold htb_teal)"
+[username]
+style_user = "bold amber"
+style_root = "bold coral"
+format = "[$user]($style) "
+
+[hostname]
+ssh_only = true
+style = "dimmed soft_white"
+format = "[@$hostname]($style) "
 
 [directory]
-style = "italic htb_green"
-format = "[$path]($style) "
+style = "bold steel_blue"
+read_only = " 󰌾"
+read_only_style = "coral"
 truncation_length = 3
-truncation_symbol = "…/"
+truncate_to_repo = true
 
+# --- MODERN PROMPT CHARACTER ---
+# Alternatives you can swap in: "󰁔", "λ", "➜", "⟫", "∙"
+[character]
+success_symbol = "[❱](bold amber)"
+error_symbol   = "[❱](bold coral)"
+vimcmd_symbol  = "[❰](bold sage)"
+vimcmd_visual_symbol = "[❰](bold mauve)"
+
+# --- GIT & JUJUTSU ---
 [git_branch]
-symbol = " "
-style = "bold htb_fg"
-format = "on [$symbol$branch]($style) "
+format = "[$branch]($style) "
+style = "muted_grey"
 
 [git_status]
-style = "htb_yellow"
-format = "([\\[$all_status$ahead_behind\\]]($style) )"
-# Minimalist status symbols
+format = "[[(*$conflicted$untracked$modified$staged$renamed$deleted)](coral)($ahead_behind$stashed )]($style)"
+style = "frost_teal"
+conflicted = "​"
+untracked = "​"
+modified = "​"
+staged = "​"
+renamed = "​"
+deleted = "​"
 stashed = "≡"
-modified = "!"
-untracked = "?"
-staged = "+"
 
+[git_state]
+format = '\([$state( $progress_current/$progress_total)]($style)\) '
+style = "amber"
+
+[jj_bookmark]
+format = "[$bookmark(@$remote)$diverged( \\(+$overflow_count others\\))]($style) "
+style = "muted_grey"
+
+[jj_status]
+format = "[[(*$all)](coral)]($style) "
+style = "frost_teal"
+conflicted = "​"
+description_empty = ""
+description_present = ""
+hidden = "​"
+immutable = "​"
+added = "​"
+copied = ""
+deleted = "​"
+modified = "​"
+renamed = "​"
+
+# --- SUBTLE LANGUAGE RUNTIMES ---
+# Rendered in muted tones so they inform without causing eye strain
 [dotnet]
 symbol = "󰪮 "
-style = "bold htb_fg"
-# Only shows if project files (.csproj, .sln) are detected
-detect_files = ['.csproj', '.sln', '.fsproj', 'global.json']
-format = "via [$symbol($version )]($style)"
+style = "mauve"
+format = "[$symbol($version )]($style)"
+heuristic = true
+
+[python]
+symbol = " "
+style = "frost_teal"
+# Shows Python version or active virtualenv subtly
+format = '[${symbol}${pyenv_prefix}(${version} )(\($virtualenv\) )]($style)'
+detect_extensions = ["py"]
+detect_files = ["pyproject.toml", "requirements.txt", ".python-version", "uv.lock"]
 
 [nodejs]
 symbol = " "
-style = "bold htb_fg"
-# Smart detection to avoid global version clutter
-detect_files = ['package.json', '.node-version']
-format = "via [$symbol($version )]($style)"
-
-[python]
-symbol = " "
-style = "bold htb_fg"
-format = "via [$symbol($version )(\\($virtualenv\\) )]($style)"
-pyenv_version_name = true
+style = "sage"
+format = "[$symbol($version )]($style)"
+detect_files = ["package.json", ".node-version"]
+detect_folders = ["node_modules"]
 
 [rust]
-symbol = " "
-style = "bold htb_fg"
-format = "via [$symbol($version )]($style)"
+symbol = "󱘗 "
+style = "coral"
+format = "[$symbol($version )]($style)"
 
 [golang]
 symbol = " "
-style = "bold htb_fg"
-format = "via [$symbol($version )]($style)"
+style = "steel_blue"
+format = "[$symbol($version )]($style)"
 
-[java]
-symbol = " "
-style = "bold htb_fg"
-format = "via [$symbol($version )]($style)"
-
-[lua]
-symbol = " "
-style = "bold htb_fg"
-format = "via [$symbol($version )]($style)"
-
-[c]
-symbol = " "
-style = "bold htb_fg"
-format = "via [$symbol($version )]($style)"
-
-[bun]
-symbol = "󰐊 "
-style = "bold htb_fg"
-format = "via [$symbol($version )]($style)"
-
-[os]
-disabled = false
-style = "htb_fg"
-
-[package]
-disabled = true # Keeps the prompt minimal
-
-[fill]
-symbol = " " # Empty fill to push character to the end of the line if desired
-
-# 5. EXCLUSIONS (Requested)
 [cmd_duration]
-disabled = true
-
-[time]
-disabled = true
+format = "[󱦟 $duration]($style)"
+style = "amber"
