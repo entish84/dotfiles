@@ -1,144 +1,216 @@
-# ==============================================================================
-# ENVIRONMENT VARIABLES & PATHS
-# ==============================================================================
+# =============================================================================
+# 1. ENVIRONMENT & PATH
+# =============================================================================
 export LANG=en_US.UTF-8
 export EDITOR=micro
 export VISUAL=micro
 
-# Ensure local binaries are in path
+# Smart word deletion (Alt+Backspace stops at '/', '.', '-', '_')
+WORDCHARS=${WORDCHARS//[\/.-_]}
+
 typeset -U path
 path=(
-    $HOME/.local/bin
-    $HOME/bin
+    "$HOME/.local/bin"
+    "$HOME/bin"
+    "/usr/local/bin"
     $path
 )
+export PATH
 
-# ==============================================================================
-# ZINIT INSTALLATION & BOOTSTRAP
-# ==============================================================================
+# =============================================================================
+# 2. THEME COHESION: FZF, BAT & AUTOSUGGESTIONS (#222831 / #393e46 / #ffd369)
+# =============================================================================
+export FZF_DEFAULT_OPTS=" \
+  --height=45% --layout=reverse --border=rounded --margin=0,1 \
+  --prompt='❱ ' --pointer='❱' --marker='✓' \
+  --color=bg+:#393e46,bg:#222831,spinner:#ffd369,hl:#ffd369 \
+  --color=fg:#abb2bf,header:#61afef,info:#7f848e,pointer:#ffd369 \
+  --color=marker:#98c379,fg+:#eeeeee,prompt:#ffd369,hl+:#ffd369 \
+  --color=border:#393e46,label:#ffd369,query:#eeeeee"
+
+export BAT_THEME="TwoDark"
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#5c6370"
+export ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
+
+# =============================================================================
+# 3. HISTORY CONFIGURATION (Optimized for Zsh + Atuin)
+# =============================================================================
+HISTFILE="$HOME/.zhistory"
+SAVEHIST=100000
+HISTSIZE=100000
+
+setopt EXTENDED_HISTORY          # Record timestamp in history
+setopt SHARE_HISTORY             # Share history between all sessions
+setopt HIST_IGNORE_ALL_DUPS      # Delete old recorded entry if new entry is a duplicate
+setopt HIST_IGNORE_SPACE         # Do not record an entry starting with a space
+setopt HIST_REDUCE_BLANKS        # Remove superfluous blanks before recording entry
+setopt HIST_VERIFY               # Show command with history expansion before running
+setopt AUTO_CD                   # Type directory name to cd into it
+setopt INTERACTIVE_COMMENTS      # Allow # comments in interactive shell
+
+# =============================================================================
+# 4. ZINIT BOOTSTRAP & ANNEXES
+# =============================================================================
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-if [ ! -d "$ZINIT_HOME" ]; then
+if [[ ! -d "$ZINIT_HOME" ]]; then
     mkdir -p "$(dirname "$ZINIT_HOME")"
     git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
 fi
 source "${ZINIT_HOME}/zinit.zsh"
 
-# Load core annexes
 zinit light-mode for \
     zdharma-continuum/zinit-annex-as-monitor \
     zdharma-continuum/zinit-annex-bin-gem-node \
     zdharma-continuum/zinit-annex-patch-dl \
     zdharma-continuum/zinit-annex-rust
 
-# ==============================================================================
-# OH-MY-ZSH LIBRARIES & PLUGINS (Synchronous)
-# ==============================================================================
-# eza config (Must be set before loading plugin)
+# =============================================================================
+# 5. OH-MY-ZSH SNIPPETS & PLUGINS (Turbo Loaded)
+# =============================================================================
 zstyle ':omz:plugins:eza' 'dirs-first' yes
 zstyle ':omz:plugins:eza' 'git-status' yes
 zstyle ':omz:plugins:eza' 'header' yes
 zstyle ':omz:plugins:eza' 'icons' yes
 
-zinit snippet OMZL::git.zsh
-zinit snippet OMZL::history.zsh         
-zinit snippet OMZL::directories.zsh
-zinit snippet OMZL::theme-and-appearance.zsh
-zinit snippet OMZP::git
-zinit snippet OMZP::direnv
-zinit snippet OMZP::eza
+# Load essential directory & git helpers in Turbo mode for <15ms startup
+zinit wait'0' lucid for \
+    OMZL::git.zsh \
+    OMZL::directories.zsh \
+    OMZP::git \
+    OMZP::direnv \
+    OMZP::eza
 
-# ==============================================================================
-# HIGH-PERFORMANCE PLUGINS (Turbo Mode)
-# ==============================================================================
-
-# 1. Additional completions (Load first, but use blockf to prevent header issues)
+# =============================================================================
+# 6. COMPLETIONS, FZF-TAB & SYNTAX HIGHLIGHTING (Strict Load Order: 0a -> 0b -> 0c)
+# =============================================================================
+# Step 0: Additional completion definitions
 zinit ice wait'0' lucid blockf
 zinit light zsh-users/zsh-completions
 
-# 2. Syntax Highlighting (The engine)
-# Using '0a' to ensure it starts after completions
+# Step 0a: Initialize compinit FIRST, then load fzf-tab BEFORE widget wrappers
 zinit ice wait'0a' lucid atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay"
-zinit light zdharma-continuum/fast-syntax-highlighting
-
-# 3. fzf-tab (The UI for completions)
-# Load after syntax highlighting to avoid conflict
-zinit ice wait'0b' lucid
 zinit light Aloxaf/fzf-tab
 
-# 4. Autosuggestions (The top layer)
-# Load last ('0c') to ensure it doesn't interfere with the others
-zinit ice wait'0c' lucid atload"!_zsh_autosuggest_start"
+# Step 0b: Fast Syntax Highlighting (loads after fzf-tab)
+zinit ice wait'0b' lucid
+zinit light zdharma-continuum/fast-syntax-highlighting
+
+# Step 0c: Autosuggestions + Keybindings (loads last to wrap widgets cleanly)
+zinit ice wait'0c' lucid atload"!_zsh_autosuggest_start; bindkey '^ ' autosuggest-accept; bindkey '^f' autosuggest-accept"
 zinit light zsh-users/zsh-autosuggestions
 
-# ==============================================================================
-# FZF-TAB CONFIGURATION & PREVIEWS
-# ==============================================================================
-# 1. Standard Zsh completion styling
+# =============================================================================
+# 7. FZF-TAB & COMPLETION STYLING
+# =============================================================================
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 zstyle ':completion:*:descriptions' format '[%d]'
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*:git-checkout:*' sort false
 
-# 2. fzf-tab behavioral tweaks
-# Switch groups using ',' and '.'
+# Make fzf-tab inherit our custom #222831 / #ffd369 FZF_DEFAULT_OPTS
+zstyle ':fzf-tab:*' use-fzf-default-opts yes
 zstyle ':fzf-tab:*' switch-group ',' '.'
-# Apply the suggested height limit for a cleaner UI
-zstyle ':fzf-tab:*' fzf-flags '--height=40%'
 
-# 3. Intelligent Previews
-# Specific rule for 'cd' (uses eza for directory tree/list)
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
+# Preview: cd (Directory tree with icons)
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --icons --group-directories-first --color=always $realpath'
+zstyle ':fzf-tab:complete:z:*' fzf-preview 'eza -1 --icons --group-directories-first --color=always $realpath'
 
-# Faster fallback: check -d (directory) first to avoid launching a process that will fail
-zstyle ':fzf-tab:complete:*:*' fzf-preview \
-  'if [ -d $realpath ]; then eza -1 --color=always $realpath; else bat --color=always --line-range :500 $realpath 2>/dev/null; fi'
-
-# 4. Bonus: System Process Preview (for kill/ps)
+# Preview: kill / ps (Process details)
+zstyle ':completion:*:*:*:*:processes' command "ps -u $USER -o pid,user,comm -w -w"
 zstyle ':fzf-tab:complete:(kill|ps):argument-rest' fzf-preview \
   '[[ $group == "[process ID]" ]] && ps --pid=$word -o cmd --no-headers -w -w'
 zstyle ':fzf-tab:complete:(kill|ps):argument-rest' fzf-flags --preview-window=down:3:wrap
 
-# ==============================================================================
-# TOOL INITIALIZATION
-# ==============================================================================
-# 1. Load Atuin Environment FIRST (so the 'atuin' command is found)
-[ -f "$HOME/.atuin/bin/env" ] && . "$HOME/.atuin/bin/env"
+# Preview: Environment Variables
+zstyle ':fzf-tab:complete:(-command-|-parameter-|-brace-parameter-|export|unset|expand):*' \
+  fzf-preview 'echo ${(P)word}'
 
-# 2. Initialize tools
-eval "$(starship init zsh)"
-eval "$(/home/rs/.local/bin/mise activate zsh)"
-eval "$(zoxide init zsh)"
-eval "$(atuin init zsh)"
+# Preview: Systemd status
+zstyle ':fzf-tab:complete:systemctl-*:*' fzf-preview 'SYSTEMD_COLORS=1 systemctl status $word'
 
-# ==============================================================================
-# HISTORY SETTINGS
-# ==============================================================================
-HISTFILE=$HOME/.zhistory
-SAVEHIST=100000
-HISTSIZE=100000
-setopt EXTENDED_HISTORY          # Save timestamp and duration
-setopt SHARE_HISTORY             # Share between sessions
-setopt HIST_IGNORE_ALL_DUPS      # No duplicates
-setopt HIST_REDUCE_BLANKS        # Clean up commands
+# Preview: General files & directories (eza for dirs, bat for files)
+zstyle ':fzf-tab:complete:*:*' fzf-preview \
+  'if [[ -d $realpath ]]; then eza -1 --icons --group-directories-first --color=always $realpath; elif [[ -f $realpath ]]; then bat --color=always --style=numbers --line-range :500 $realpath 2>/dev/null; fi'
 
-# ==============================================================================
-# FUNCTIONS & ALIASES
-# ==============================================================================
-# Yazi wrapper for directory tracking on exit
+# =============================================================================
+# 8. CLI TOOLS INITIALIZATION (Starship, Mise, Zoxide, FZF, Atuin)
+# =============================================================================
+[[ -f "$HOME/.atuin/bin/env" ]] && . "$HOME/.atuin/bin/env"
+
+# 1. Starship Prompt
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init zsh)"
+fi
+
+# 2. Mise (Polyglot runtime manager)
+if command -v mise >/dev/null 2>&1; then
+    eval "$(mise activate zsh)"
+fi
+
+# 3. Zoxide (Smart directory jumper)
+if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init zsh)"
+fi
+
+# 4. FZF native keybindings (Ctrl+T for files, Alt+C for dirs; Atuin overrides Ctrl+R next)
+if command -v fzf >/dev/null 2>&1; then
+    source <(fzf --zsh 2>/dev/null)
+fi
+
+# 5. Atuin (Shell history — loaded after fzf so Atuin owns Ctrl+R and Up-Arrow)
+if command -v atuin >/dev/null 2>&1; then
+    eval "$(atuin init zsh)"
+fi
+
+# =============================================================================
+# 9. SUBTLE TRANSIENT PROMPT (Collapses executed lines to "∙ ❱ ")
+# =============================================================================
+_TransientPrompt_zle-line-init() {
+    emulate -L zsh
+    [[ $CONTEXT == start ]] || return 0
+    while true; do
+        zle .recursive-edit
+        local -i ret=$?
+        [[ $ret == 0 && $KEYS == $'\4' ]] || break
+        [[ -o ignore_eof ]] || exit 0
+    done
+    local saved_prompt=$PROMPT
+    local saved_rprompt=$RPROMPT
+    PROMPT='%F{#7f848e}∙%f %F{#ffd369}❱%f '
+    RPROMPT=''
+    zle .reset-prompt
+    PROMPT=$saved_prompt
+    RPROMPT=$saved_rprompt
+    if (( ret )); then
+        zle .send-break
+    else
+        zle .accept-line
+    fi
+    return ret
+}
+zle -N zle-line-init _TransientPrompt_zle-line-init
+
+# =============================================================================
+# 10. FUNCTIONS, ALIASES & TERMINAL INTEGRATION
+# =============================================================================
+# Yazi file manager wrapper (changes CWD on exit)
 function yy() {
-	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
-	yazi "$@" --cwd-file="$tmp"
-	if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-		cd -- "$cwd"
-	fi
-	rm -f -- "$tmp"
+    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+    yazi "$@" --cwd-file="$tmp"
+    if cwd="$(cat -- "$tmp")" && [[ -n "$cwd" ]] && [[ "$cwd" != "$PWD" ]]; then
+        builtin cd -- "$cwd"
+    fi
+    rm -f -- "$tmp"
 }
 
-alias fm=yy
+alias fm='yy'
 
-# Source external aliases
-[ -f ~/.zsh_aliases ] && source ~/.zsh_aliases
+# Kitty SSH fix (propagates terminfo automatically to remote servers)
+[[ "$TERM" == "xterm-kitty" ]] && alias ssh='kitten ssh'
 
-# ==============================================================================
-# INTEGRATIONS & FINAL SETUP
-# ==============================================================================
-# VSCode shell integration
-[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
+# Custom external aliases
+[[ -f ~/.zsh_aliases ]] && source ~/.zsh_aliases
+
+# VS Code shell integration
+[[ "$TERM_PROGRAM" == "vscode" ]] && command -v code >/dev/null 2>&1 && . "$(code --locate-shell-integration-path zsh)"
