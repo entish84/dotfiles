@@ -139,14 +139,19 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
     }
 }
 
-# ------------------------------------------------------------------------------
-# 3. MODERN RUST REPLACEMENTS & CUSTOM ALIASES
-# ------------------------------------------------------------------------------
+# ==========================================
+# 3. MODERN REPLACEMENTS & ALIASES
+# ==========================================
 
-# Replace 'ls' with 'eza' (Tree view, git status, icons)
+# Check if eza exists and override default aliases
 if (Get-Command eza -ErrorAction SilentlyContinue) {
-    function ls   { eza --icons --group-directories-first $args }
-    function ll   { eza -la --icons --group-directories-first --git $args }
+    # Remove PowerShell's default 'ls' alias to Get-ChildItem
+    if (Test-Path Alias:ls) {
+        Remove-Item Alias:ls -Force
+    }
+
+    function ls { eza --icons --group-directories-first $args }
+    function ll { eza -la --icons --group-directories-first --git $args }
     function tree { eza --tree --icons $args }
 } else {
     try { Import-Module Terminal-Icons -ErrorAction Stop } catch {}
