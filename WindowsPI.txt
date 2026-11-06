@@ -4,11 +4,122 @@ irm https://christitus.com/win | iex
 # Clink Install
 winget install --id chrisant996.Clink -e
 
-# Starship for CMD
-# Create a file at %LocalAppData%\clink\starship.lua
-# with content as
-load(io.popen('starship init cmd'):read("*a"))()
+================================================================================
+ULTIMATE POWERSHELL 7+ TERMINAL SETUP COMPENDIUM
+================================================================================
+This script contains all execution policies, winget installers, module 
+installations, and the final profile configuration for future deployments.
 
-# Starship for PowerShell
-Invoke-Expression (&starship init powershell)
+--------------------------------------------------------------------------------
+PART 1: ENVIRONMENT & PERMISSIONS (Run in standard Windows PowerShell first)
+--------------------------------------------------------------------------------
+# Allow execution of locally created scripts for the current user
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 
+--------------------------------------------------------------------------------
+PART 2: INSTALL CORE APPLICATIONS & ENHANCEMENTS
+--------------------------------------------------------------------------------
+# Install Modern PowerShell 7+
+winget install Microsoft.PowerShell --silent
+
+# Install Starship Prompt Engine
+winget install Starship.Starship --silent
+
+# Install Zoxide (Smarter CD replacement)
+winget install ajeetdsouza.zoxide --silent
+
+# Install FZF (Fuzzy Finder CLI core)
+winget install junegunn.fzf --silent
+
+--------------------------------------------------------------------------------
+PART 3: RESTART TERMINAL & INSTALL POWERSHELL MODULES
+--------------------------------------------------------------------------------
+# Open a brand new PowerShell 7 tab, then run:
+
+# Install PSFzf wrapper module for robust Ctrl+R history interception
+Install-Module PSFzf -Repository PSGallery -Force -Scope CurrentUser
+
+# Install Terminal-Icons for visual glyphs in 'ls' / 'dir' output
+Install-Module Terminal-Icons -Repository PSGallery -Force -Scope CurrentUser
+
+--------------------------------------------------------------------------------
+PART 4: INITIALIZE PROFILE SCRIPT
+--------------------------------------------------------------------------------
+# Create the physical profile file if it doesn't exist
+New-Item -Path $PROFILE -Type File -Force
+
+# Open the profile in Notepad to paste the script below
+notepad $PROFILE
+
+--------------------------------------------------------------------------------
+PART 5: THE ULTIMATE PROFILE SCRIPT (Paste entirely into $PROFILE)
+--------------------------------------------------------------------------------
+# ==========================================
+# 1. POWERSHELL AUTO-SUGGESTIONS & HISTORY
+# ==========================================
+Import-Module PSReadLine
+
+# Fish-like inline predictive text from history
+Set-PSReadLineOption -PredictionSource History
+Set-PSReadLineOption -PredictionViewStyle InlineView
+
+# Visual menu layout when pressing Tab
+Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
+
+# Use Up/Down arrows to search history filtering by what you've already typed
+Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
+
+# Smart keybindings: RightArrow accepts suggestion, Ctrl+Space forces menu completion
+Set-PSReadLineKeyHandler -Key RightArrow -Function ForwardChar
+Set-PSReadLineKeyHandler -Key 'Ctrl+Spacebar' -Function MenuComplete
+
+# ==========================================
+# 2. ADVANCED INTERACTIVE TOOL INTEGRATION
+# ==========================================
+
+# Zoxide: Smarter CD command
+if (Get-Command zoxide -ErrorAction SilentlyContinue) {
+    Invoke-Expression (& { (zoxide init powershell | Out-String) })
+}
+
+# FZF Module Integration (Robust History Search Fix)
+if (Get-Module -ListAvailable -Name PSFzf) {
+    Import-Module PSFzf
+    # Overrides default history search with beautiful fzf menus
+    Set-PsFzfOption -PSReadlineChordReverseHistory 'Ctrl+r' -PSReadlineChordProvider 'Ctrl+t'
+}
+
+# ==========================================
+# 3. EXTRA TAB-COMPLETIONS (Winget)
+# ==========================================
+if (Get-AppxPackage -Name "Microsoft.DesktopAppInstaller" -ErrorAction SilentlyContinue) {
+    Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
+        param($wordToComplete, $commandAst, $cursorPosition)
+        [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+        $text = winget complete --word="$wordToComplete" --position=$cursorPosition --commandline="$commandAst"
+        return $text | ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
+    }
+}
+
+# ==========================================
+# 4. COSMETICS & PROMPT ENGINE
+# ==========================================
+
+# Initialize Starship
+if (Get-Command starship -ErrorAction SilentlyContinue) {
+    Invoke-Expression (& { (starship init powershell --print-full-init | Out-String) })
+}
+
+# Terminal Icons (Adds file extensions icons to 'ls')
+if (Get-Module -ListAvailable -Name Terminal-Icons) {
+    Import-Module Terminal-Icons
+}
+# ==========================================
+
+--------------------------------------------------------------------------------
+PART 6: RELOAD ENVIRONMENT
+--------------------------------------------------------------------------------
+# Apply everything instantly without restarting
+. $PROFILE
+================================================================================
